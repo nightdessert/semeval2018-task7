@@ -216,9 +216,12 @@ def load_abstracts_relations(
     #parsed_texts:{'id':,'text'}
     #parsed_entities:{'id': 'H01-1001.21', 'text': 'indices', 'start': 1290, 'end': 1297}]
     #parsed_relations:{'type': 'MODEL-FEATURE', 'ent_a': 'I05-5009.13', 'ent_b': 'I05-5009.14', 'is_reverse': False}
+'''
+parsed_texts, parsed_entities, parsed_relations=load_abstracts_relations('1.1',False)
+print(parsed_texts[0])
 
-
-
+print(parsed_entities[0])
+'''
 def get_eval_list():
     eval_list=[]
     for l in open('data/training-eval.txt'):
