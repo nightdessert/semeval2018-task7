@@ -5,8 +5,8 @@ class EntityInstance(object):
     def __init__(self,item):
        
         self.question_text = item.get("text", None)
-        self.start_position = item.get("start", None)
-        self.end_position = item.get("end", None)
+        # self.start_position = item.get("start", None)
+        # self.end_position = item.get("end", None)
         self.qas_id = item.get("id", None)
         # print(self.start_position)
 
@@ -37,11 +37,15 @@ class Instance(object):
                  question_text,
                  context,
                  tag  ,
-                 qas_id ):
+                 qas_id,
+                 start = None,
+                 end = None):
         self.question_text = question_text
         self.context = context
         self.tag = tag
         self.qas_id = qas_id
+        # self.start = start,
+        # self.end = end
         
 
     def __str__(self):
@@ -100,10 +104,13 @@ class bert_data_handler(object):
                                 " [BREAK] " + self.entities[ent_a].question_text
                 tag = item['type']
                 qas_id = ent_a + '_' + ent_b
+                # start = min(ent_a.start_position, ent_b.start_position)
+                # end = max(ent_a.end_position, ent_b.end_position)
                 self.relations.append(Instance(question_text = question, 
                                                context = context,
                                                tag = tag,
-                                               qas_id = qas_id))
+                                               qas_id = qas_id,
+                                                ))
 
 
     def dumps(self, output_path):
@@ -118,8 +125,8 @@ class bert_data_handler(object):
 
 if __name__ == '__main__':
    base_path = "/home/v-yinguo/Amcute/repos/semeval2018-task7/"
-   subtask = 1.2
-   mode = "train"
+   subtask = 1.1
+   mode = "test"
    path = base_path + mode+ "_"+str(subtask) + ".json" 
    dh = bert_data_handler(subtask = subtask)
    dh.dumps(path)
