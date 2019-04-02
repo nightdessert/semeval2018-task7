@@ -139,13 +139,11 @@ def read_squad_examples(input_file, is_training):
         # start = entry['start']
         # end = entry['end']
 
-        if is_training:
-            tag = entry['tag']
+        # if is_training:
+        tag = entry['tag']
             
-        else:
+        # else:
             
-            tag = ""
-
         instance = Instance(
             question_text = question_text ,
             context = doc_tokens, 
