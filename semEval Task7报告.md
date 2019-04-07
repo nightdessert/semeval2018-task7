@@ -48,7 +48,9 @@
 
 ### bert fine-tune
 
-借鉴Bert Q&A任务的模型，
+在bert上叠加一层线性层，对输出的特征做softmax。
+
+![1554621908865](C:\Users\v-yinguo\AppData\Roaming\Typora\typora-user-images\1554621908865.png)
 
 
 
@@ -58,7 +60,47 @@
 
 ### 实验数据介绍
 
+关系分类任务一共包括六种离散的类别，这些关系特定于科学领域，他们的示例在科学论文的摘要和介绍中出现。任务提供完整的科学论文摘要，每篇摘要大约包含100个词左右。训练数据和测试数据中均标注了实体以及实体之间的关系方向。具体的数据形式是：给定摘要中的一对实体，任务包括对它们之间的语义关系进行分类，一个预定义好的关系目录已给定，如下表所示：
+
+| 关系种类   | 示例                                                         |
+| ---------- | ------------------------------------------------------------ |
+| USAGE      | approach – model / approach – parsing / MT system – Japanese / parse – sentence |
+| RESULT     | order – performance / ambiguity – sentence / parser – performance |
+| MODEL      | categories – words / interpretation – utterance / categories – words |
+| PART_WHOLE | ontology – concepts / knowledge – domain /  expressions – text |
+| TOPIC      | paper – method / research – speech                           |
+| COMPARISON | result – standard                                            |
+
+具体任务分为两个子任务
+
+1. 无噪声数据上的关系分类
+
+   训练数据和测试数据中均为手工标注的实体，训练数据中，实体之间手工标注出语义关系，测试数据中，仅给出实体注释和未标记关系的示例，任务是预测出实体之间的语义关系，如下所示是测试集中的一个示例：
+
+   ```
+   Korean, a <entity id=”H01-1041.10”>verb final language</entity>with <entity id=”H01-1041.11”>overt case markers</entity>(...)
+   ```
+
+   一个关系示例使用唯一的标号被定义为**(H01-1041.10, H01-1041.11)**.需要预测的即为关系类别标签例如：
+
+    **MODEL-FEATURE(H01-1041.10, H01-1041.11)**.
+
+   
+
+2. 有噪声数据上的关系分类
+
+   训练数据和测试数据中均为自动标注的实体，实体中可能会出现定界错误的实例，训练数据中，在测试数据中，仅给出自动实体注释和未标记关系的示例，任务是预测出实体之间的语义关系，如下所示是测试集中的一个示例
+
+   ```
+   This <entity id=”L08-1203.8”> paper </entity> introduces a new <entity id=”L08-
+   1203.9”>architecture</entity>(...)
+   ```
+
+   关系示例表示为**(L08-1203.8, L08-1203.9).**，需要预测的即为关系类别标签例如：**TOPIC(L08-1203.8, L08-1203.9)**
+
 ### 模型的训练与超参设置
+
+
 
 ### 实验结果分析与比较
 
