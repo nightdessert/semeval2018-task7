@@ -11,7 +11,7 @@ transformer = TfidfTransformer(smooth_idf=False)
 vectorizer = CountVectorizer(stop_words=None)
 label_list={}
 
-
+window=2
 replace_entity_flag=False
 use_glove=True
 
@@ -61,18 +61,18 @@ def get_glove(word_embedding, wordl):
         if word in word_embedding:
             vec.append(word_embedding[word])
         else:
-            vec.append(np.random.random_sample(300,))
+            vec.append(np.random.random_sample(50,))
     return np.mean(vec,axis=0)
 
 def load_glove():
     word_embedding={}
-    f=open('glove.6B.300d.txt','r')
+    f=open('glove.6B.50d.txt','r')
     for i,line in enumerate(f.readlines()):
         row=line.strip().split(' ')
         word_embedding[row[0]]=np.asarray(row[1:],dtype="float32")
     return word_embedding
 
-def repalce_entity_text(parsed_texts,parsed_entities):
+def repalce_entity_text(parsed_texts,parsed_entities,):
     corpus=[]
     entityl={}
     pattern='entity_'
@@ -88,6 +88,39 @@ def repalce_entity_text(parsed_texts,parsed_entities):
             text=text.replace(e['text'],entityl[e['id']])
         corpus.append(text)
     return corpus,entityl
+
+def get_window_word(sentence,entity,tf_dic):
+    windowl=sentence[:entity['start']].split()
+    windowr=sentence[entity['end']+1:].split()
+    vec=entity['text'].split()
+    vec_len=(vec)
+    for i in range(window):
+        if len(vec)==7:break
+        if len(windowl)<i+1:
+            vec=['@']+vec
+        else:
+            vec=[windowl[i]]+vec
+    for i in range(window):
+        if len(vec)==7:break
+        if len(windowr)<i+1:
+            vec=vec+['@']
+        else:
+            vec+=[windowr[i]]
+
+
+    result=[]
+    for word in vec:
+        if word in tf_dic:
+            result.append(tf_dic[word])
+        elif word=='@':
+            result.append(-1)
+        else:
+            result.append(0)
+    if len(result)>6: result=result[:6]
+    if len(result)!=6:print(len(result))
+    return np.array(result,dtype=float)
+
+
 def main():
     if use_glove:
         word_embedding=load_glove()
@@ -113,24 +146,30 @@ def main():
     word2tfidf = {a:b for a,b in zip(vectorizer.get_feature_names(), transformer.idf_)}
     #print(vectorizer.get_feature_names())
     entity2word_train={}
+    entity_dic={}
     for paper in parsed_entities_train:
         for e in paper:
             entity2word_train[e['id']]=e['text']
+            entity_dic[e['id']]=e
     entity2word_test={}
     for paper in parsed_entities_test:
         for e in paper:
             entity2word_test[e['id']]=e['text']
+            entity_dic[e['id']]=e
 
     x_train=[]
     y_train=[]
     i=0
-    for paper in parsed_relations_train:
+    for paper,text in zip(parsed_relations_train,parsed_texts_train):
         for e in paper:
             #paper_id=e['ent_a'].split('.')[0]
 
+
             worda=entity2word_train[e['ent_a']].split()
+            window_a=np.array(get_window_word(text['text'],entity_dic[e['ent_a']],word2tfidf))
             a_len=len(worda)
             wordb=entity2word_train[e['ent_b']].split()
+            window_b=np.array(get_window_word(text['text'],entity_dic[e['ent_b']],word2tfidf))
             b_len=len(wordb)
 
             if use_glove:
@@ -157,6 +196,7 @@ def main():
             #vec=[worda,wordb,revers_flag]
 
             vec=[worda,a_len,wordb,b_len,revers_flag]
+            #vec=np.concatenate((window_a,window_b,np.array([revers_flag])))
             if use_glove:
                 vec=np.concatenate((np.array(vec),wva,wvb))
                 x_train.append(vec)
@@ -171,13 +211,16 @@ def main():
     x_test=[]
     y_test=[]
 
-    for paper in parsed_relations_test:
+    for paper,text in zip(parsed_relations_test,parsed_texts_test):
         for e in paper:
             #paper_id=e['ent_a'].split('.')[0]
             worda=entity2word_test[e['ent_a']].split()
+            window_a=np.array(get_window_word(text['text'],entity_dic[e['ent_a']],word2tfidf))
             a_len=len(worda)
             wordb=entity2word_test[e['ent_b']].split()
+            window_b=np.array(get_window_word(text['text'],entity_dic[e['ent_b']],word2tfidf))
             b_len=len(wordb)
+
 
             if use_glove:
                 wva=get_glove(word_embedding,worda)
@@ -199,6 +242,7 @@ def main():
             if e['is_reverse']==True: revers_flag=1
             #vec=[worda,wordb,revers_flag]
             vec=[worda,a_len,wordb,b_len,revers_flag]
+            #vec=np.concatenate((window_a,window_b,np.array([revers_flag])))
             if use_glove:
                 vec=np.concatenate((np.array(vec),wva,wvb))
                 x_test.append(vec)
@@ -206,10 +250,8 @@ def main():
                 x_test.append(np.array(vec))
 
             y_test.append(label_list[e['type']])
-    for x in x_train:
-        if x.shape[0]!=105:
-            print(x.shape[0])
-    classifier=sklearn.svm.SVC(kernel='rbf')
+    #print(x_train)
+    classifier=sklearn.svm.SVC(kernel='linear')
     classifier.fit(x_train,y_train)
     predicted_svm = classifier.predict(x_test)
     print(classification_report(predicted_svm,y_test,target_names=[v for v in label_list.keys()]))
