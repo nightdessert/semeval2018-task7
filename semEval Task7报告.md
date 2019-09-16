@@ -1,12 +1,5 @@
 # semEval Task7报告
 
-#### 姓名：郭一诺 & 吴文浩
-
-#### 学号：1801213682 & 1801213710
-
-#### 代码github地址：<https://github.com/nightdessert/semeval2018-task7>
-
-----
 
 ## 引言
 
